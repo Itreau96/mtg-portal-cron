@@ -1,0 +1,114 @@
+from typing import TypedDict, List, Dict, Optional, Union
+
+class ImageUrisDict(TypedDict):
+    small: str
+    normal: str
+    large: str
+    png: str
+    art_crop: str
+    border_crop: str
+
+class LegalitiesDict(TypedDict):
+    standard: str
+    future: str
+    historic: str
+    timeless: str
+    gladiator: str
+    pioneer: str
+    explorer: str
+    modern: str
+    legacy: str
+    pauper: str
+    vintage: str
+    penny: str
+    commander: str
+    oathbreaker: str
+    standardbrawl: str
+    brawl: str
+    alchemy: str
+    paupercommander: str
+    duel: str
+    oldschool: str
+    premodern: str
+    predh: str
+
+class PricesDict(TypedDict, total=False):
+    usd: Optional[str]
+    usd_foil: Optional[str]
+    usd_etched: Optional[str]
+    eur: Optional[str]
+    eur_foil: Optional[str]
+    tix: Optional[str]
+
+class RelatedUrisDict(TypedDict):
+    gatherer: str
+    tcgplayer_infinite_articles: str
+    tcgplayer_infinite_decks: str
+    edhrec: str
+
+class PurchaseUrisDict(TypedDict):
+    tcgplayer: str
+    cardmarket: str
+    cardhoarder: str
+
+class CardDict(TypedDict):
+    object: str
+    id: str
+    oracle_id: str
+    multiverse_ids: List[int]
+    mtgo_id: int
+    arena_id: int
+    tcgplayer_id: int
+    name: str
+    lang: str
+    released_at: str
+    uri: str
+    scryfall_uri: str
+    layout: str
+    highres_image: bool
+    image_status: str
+    image_uris: ImageUrisDict
+    mana_cost: str
+    cmc: float
+    type_line: str
+    oracle_text: str
+    colors: List[str]
+    color_identity: List[str]
+    keywords: List[str]
+    produced_mana: List[str]
+    legalities: LegalitiesDict
+    games: List[str]
+    reserved: bool
+    game_changer: bool
+    foil: bool
+    nonfoil: bool
+    finishes: List[str]
+    oversized: bool
+    promo: bool
+    reprint: bool
+    variation: bool
+    set_id: str
+    set: str
+    set_name: str
+    set_type: str
+    set_uri: str
+    set_search_uri: str
+    scryfall_set_uri: str
+    rulings_uri: str
+    prints_search_uri: str
+    collector_number: str
+    digital: bool
+    rarity: str
+    card_back_id: str
+    artist: str
+    artist_ids: List[str]
+    illustration_id: str
+    border_color: str
+    frame: str
+    full_art: bool
+    textless: bool
+    booster: bool
+    story_spotlight: bool
+    prices: PricesDict
+    related_uris: RelatedUrisDict
+    purchase_uris: PurchaseUrisDict
