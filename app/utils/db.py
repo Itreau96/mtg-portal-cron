@@ -1,8 +1,10 @@
 import psycopg2
 from psycopg2.extras import execute_values
 import ijson
+import contextlib
 from ..config import settings
 
+@contextlib.contextmanager
 def get_db_connection():
     conn = psycopg2.connect(settings.db_url)
     try:
@@ -82,7 +84,7 @@ def stream_insert_cards(conn, json_path, batch_size=1000):
                 execute_values(
                     cursor,
                     f"""
-                    INSERT INTO {settings.card_table} (
+                    INSERT INTO {settings.staging_card_table} (
                         id, object, oracle_id, multiverse_ids, mtgo_id, arena_id, tcgplayer_id, name, lang, released_at, uri, scryfall_uri, layout, highres_image, image_status, image_uris, mana_cost, cmc, type_line, oracle_text, colors, color_identity, keywords, produced_mana, legalities, games, reserved, game_changer, foil, nonfoil, finishes, oversized, promo, reprint, variation, set_id, set, set_name, set_type, set_uri, set_search_uri, scryfall_set_uri, rulings_uri, prints_search_uri, collector_number, digital, rarity, card_back_id, artist, artist_ids, illustration_id, border_color, frame, full_art, textless, booster, story_spotlight, prices, related_uris, purchase_uris
                     ) VALUES %s ON CONFLICT (id) DO NOTHING
                     """,
@@ -95,7 +97,7 @@ def stream_insert_cards(conn, json_path, batch_size=1000):
             execute_values(
                 cursor,
                 f"""
-                INSERT INTO {settings.card_table} (
+                INSERT INTO {settings.staging_card_table} (
                     id, object, oracle_id, multiverse_ids, mtgo_id, arena_id, tcgplayer_id, name, lang, released_at, uri, scryfall_uri, layout, highres_image, image_status, image_uris, mana_cost, cmc, type_line, oracle_text, colors, color_identity, keywords, produced_mana, legalities, games, reserved, game_changer, foil, nonfoil, finishes, oversized, promo, reprint, variation, set_id, set, set_name, set_type, set_uri, set_search_uri, scryfall_set_uri, rulings_uri, prints_search_uri, collector_number, digital, rarity, card_back_id, artist, artist_ids, illustration_id, border_color, frame, full_art, textless, booster, story_spotlight, prices, related_uris, purchase_uris
                 ) VALUES %s ON CONFLICT (id) DO NOTHING
                 """,

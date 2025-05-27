@@ -12,10 +12,12 @@ def build_db():
     logging.info("Starting MTG database build process...")
     bulk_uri = get_bulk_uri()
     data_path = download_bulk_card_data(bulk_uri)
+    # data_path = './bulk_data/scryfall_bulk_cards_20250525_212434.json'; temporary for testing. Don't want to over-ping Scryfall API
 
     # Create the table if it doesn't exist and load data
     with get_db_connection() as conn:
         create_card_table(conn, settings.staging_card_table)
+        create_card_table(conn, settings.live_card_table)
         logging.info(f"Created or verified table: {settings.staging_card_table}")
         stream_insert_cards(conn, data_path)
         swap_table_names(conn, settings.staging_card_table, settings.live_card_table)
