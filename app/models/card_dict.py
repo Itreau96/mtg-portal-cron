@@ -1,4 +1,4 @@
-from typing import TypedDict, List, Dict, Optional, Union
+from typing import TypedDict, List, Optional
 
 class ImageUrisDict(TypedDict):
     small: str
