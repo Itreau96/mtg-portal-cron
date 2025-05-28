@@ -14,4 +14,4 @@ if __name__ == "__main__":
     ''')
     logging.info("Starting cron jobs...")
     build_db()
-    logging.info("Cron jobs completed successfully.")
+    logging.info("Cron jobs completed.")

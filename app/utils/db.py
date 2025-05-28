@@ -1,4 +1,5 @@
 import psycopg2
+from psycopg2 import sql
 from psycopg2.extras import execute_values
 import ijson
 import contextlib
@@ -12,9 +13,26 @@ def get_db_connection():
     finally:
         conn.close()
 
-def stream_insert_cards(conn, json_path, batch_size=1000):
+def truncate_table(cur, table_name: str):
+    """
+    Truncates a table if it exists (safe identifier handling).
+    """
+    cur.execute("""
+        SELECT EXISTS (
+            SELECT 1
+            FROM information_schema.tables
+            WHERE table_name = %s AND table_schema = 'public'
+        )
+    """, (table_name,))
+    exists = cur.fetchone()[0]
+
+    if exists:
+        query = sql.SQL("TRUNCATE TABLE {}").format(sql.Identifier(table_name))
+        cur.execute(query)
+
+def stream_insert_cards(cur, json_path, batch_size=1000):
     import json
-    with open(json_path, 'r', encoding='utf-8') as f, conn.cursor() as cursor:
+    with open(json_path, 'r', encoding='utf-8') as f:
         cards_iter = ijson.items(f, 'item')
         batch = []
         for card in cards_iter:
@@ -82,7 +100,7 @@ def stream_insert_cards(conn, json_path, batch_size=1000):
             ))
             if len(batch) >= batch_size:
                 execute_values(
-                    cursor,
+                    cur,
                     f"""
                     INSERT INTO {settings.staging_card_table} (
                         id, object, oracle_id, multiverse_ids, mtgo_id, arena_id, tcgplayer_id, name, lang, released_at, uri, scryfall_uri, layout, highres_image, image_status, image_uris, mana_cost, cmc, type_line, oracle_text, colors, color_identity, keywords, produced_mana, legalities, games, reserved, game_changer, foil, nonfoil, finishes, oversized, promo, reprint, variation, set_id, set, set_name, set_type, set_uri, set_search_uri, scryfall_set_uri, rulings_uri, prints_search_uri, collector_number, digital, rarity, card_back_id, artist, artist_ids, illustration_id, border_color, frame, full_art, textless, booster, story_spotlight, prices, related_uris, purchase_uris
@@ -90,12 +108,11 @@ def stream_insert_cards(conn, json_path, batch_size=1000):
                     """,
                     batch
                 )
-                conn.commit()
                 batch.clear()
         # Insert any remaining cards
         if batch:
             execute_values(
-                cursor,
+                cur,
                 f"""
                 INSERT INTO {settings.staging_card_table} (
                     id, object, oracle_id, multiverse_ids, mtgo_id, arena_id, tcgplayer_id, name, lang, released_at, uri, scryfall_uri, layout, highres_image, image_status, image_uris, mana_cost, cmc, type_line, oracle_text, colors, color_identity, keywords, produced_mana, legalities, games, reserved, game_changer, foil, nonfoil, finishes, oversized, promo, reprint, variation, set_id, set, set_name, set_type, set_uri, set_search_uri, scryfall_set_uri, rulings_uri, prints_search_uri, collector_number, digital, rarity, card_back_id, artist, artist_ids, illustration_id, border_color, frame, full_art, textless, booster, story_spotlight, prices, related_uris, purchase_uris
@@ -103,15 +120,14 @@ def stream_insert_cards(conn, json_path, batch_size=1000):
                 """,
                 batch
             )
-            conn.commit()
 
-def create_card_table(conn, table_name):
+def create_card_table(cur, table_name: str):
     """
     Creates a PostgreSQL table for CardDict structure.
     Nested fields are stored as JSONB.
     """
-    create_table_sql = f"""
-    CREATE TABLE IF NOT EXISTS {table_name} (
+    query = sql.SQL("""
+    CREATE TABLE IF NOT EXISTS {} (
         id TEXT PRIMARY KEY,
         object TEXT,
         oracle_id TEXT,
@@ -171,21 +187,19 @@ def create_card_table(conn, table_name):
         story_spotlight BOOLEAN,
         prices JSONB,
         related_uris JSONB,
-        purchase_uris JSONB
+        purchase_uris JSONB,
+        uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
-    """
-    with conn.cursor() as cursor:
-        cursor.execute(create_table_sql)
-        conn.commit()
+    """).format(sql.Identifier(table_name))
 
-def swap_table_names(conn, table1: str, table2: str):
+    cur.execute(query)
+
+def swap_table_names(cur, table1: str, table2: str):
     """
     Atomically swaps the names of two tables in PostgreSQL.
     Uses a temporary name to avoid conflicts.
     """
     temp_name = f"{table1}_swap_temp"
-    with conn.cursor() as cursor:
-        cursor.execute(f'ALTER TABLE {table1} RENAME TO {temp_name};')
-        cursor.execute(f'ALTER TABLE {table2} RENAME TO {table1};')
-        cursor.execute(f'ALTER TABLE {temp_name} RENAME TO {table2};')
-        conn.commit()
+    cur.execute(f'ALTER TABLE {table1} RENAME TO {temp_name};')
+    cur.execute(f'ALTER TABLE {table2} RENAME TO {table1};')
+    cur.execute(f'ALTER TABLE {temp_name} RENAME TO {table2};')
