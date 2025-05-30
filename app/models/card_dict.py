@@ -112,3 +112,5 @@ class CardDict(TypedDict):
     prices: PricesDict
     related_uris: RelatedUrisDict
     purchase_uris: PurchaseUrisDict
+    power: str
+    toughness: str
