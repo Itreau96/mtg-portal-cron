@@ -96,14 +96,16 @@ def stream_insert_cards(cur, json_path, batch_size=1000):
                 card.get('story_spotlight'),
                 json.dumps(card.get('prices')) if card.get('prices') else None,
                 json.dumps(card.get('related_uris')) if card.get('related_uris') else None,
-                json.dumps(card.get('purchase_uris')) if card.get('purchase_uris') else None
+                json.dumps(card.get('purchase_uris')) if card.get('purchase_uris') else None,
+                card.get('power'),
+                card.get('toughness')
             ))
             if len(batch) >= batch_size:
                 execute_values(
                     cur,
                     f"""
                     INSERT INTO {settings.staging_card_table} (
-                        id, object, oracle_id, multiverse_ids, mtgo_id, arena_id, tcgplayer_id, name, lang, released_at, uri, scryfall_uri, layout, highres_image, image_status, image_uris, mana_cost, cmc, type_line, oracle_text, colors, color_identity, keywords, produced_mana, legalities, games, reserved, game_changer, foil, nonfoil, finishes, oversized, promo, reprint, variation, set_id, set, set_name, set_type, set_uri, set_search_uri, scryfall_set_uri, rulings_uri, prints_search_uri, collector_number, digital, rarity, card_back_id, artist, artist_ids, illustration_id, border_color, frame, full_art, textless, booster, story_spotlight, prices, related_uris, purchase_uris
+                        id, object, oracle_id, multiverse_ids, mtgo_id, arena_id, tcgplayer_id, name, lang, released_at, uri, scryfall_uri, layout, highres_image, image_status, image_uris, mana_cost, cmc, type_line, oracle_text, colors, color_identity, keywords, produced_mana, legalities, games, reserved, game_changer, foil, nonfoil, finishes, oversized, promo, reprint, variation, set_id, set, set_name, set_type, set_uri, set_search_uri, scryfall_set_uri, rulings_uri, prints_search_uri, collector_number, digital, rarity, card_back_id, artist, artist_ids, illustration_id, border_color, frame, full_art, textless, booster, story_spotlight, prices, related_uris, purchase_uris, power, toughness
                     ) VALUES %s ON CONFLICT (id) DO NOTHING
                     """,
                     batch
@@ -115,7 +117,7 @@ def stream_insert_cards(cur, json_path, batch_size=1000):
                 cur,
                 f"""
                 INSERT INTO {settings.staging_card_table} (
-                    id, object, oracle_id, multiverse_ids, mtgo_id, arena_id, tcgplayer_id, name, lang, released_at, uri, scryfall_uri, layout, highres_image, image_status, image_uris, mana_cost, cmc, type_line, oracle_text, colors, color_identity, keywords, produced_mana, legalities, games, reserved, game_changer, foil, nonfoil, finishes, oversized, promo, reprint, variation, set_id, set, set_name, set_type, set_uri, set_search_uri, scryfall_set_uri, rulings_uri, prints_search_uri, collector_number, digital, rarity, card_back_id, artist, artist_ids, illustration_id, border_color, frame, full_art, textless, booster, story_spotlight, prices, related_uris, purchase_uris
+                    id, object, oracle_id, multiverse_ids, mtgo_id, arena_id, tcgplayer_id, name, lang, released_at, uri, scryfall_uri, layout, highres_image, image_status, image_uris, mana_cost, cmc, type_line, oracle_text, colors, color_identity, keywords, produced_mana, legalities, games, reserved, game_changer, foil, nonfoil, finishes, oversized, promo, reprint, variation, set_id, set, set_name, set_type, set_uri, set_search_uri, scryfall_set_uri, rulings_uri, prints_search_uri, collector_number, digital, rarity, card_back_id, artist, artist_ids, illustration_id, border_color, frame, full_art, textless, booster, story_spotlight, prices, related_uris, purchase_uris, power, toughness
                 ) VALUES %s ON CONFLICT (id) DO NOTHING
                 """,
                 batch
@@ -126,6 +128,7 @@ def create_card_table(cur, table_name: str):
     Creates a PostgreSQL table for CardDict structure.
     Nested fields are stored as JSONB.
     """
+
     query = sql.SQL("""
     CREATE TABLE IF NOT EXISTS {} (
         id TEXT PRIMARY KEY,
@@ -188,7 +191,9 @@ def create_card_table(cur, table_name: str):
         prices JSONB,
         related_uris JSONB,
         purchase_uris JSONB,
-        uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        power TEXT,
+        toughness TEXT
     );
     """).format(sql.Identifier(table_name))
 
